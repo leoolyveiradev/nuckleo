@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Nuckleo — organize links, textos, arquivos e códigos no seu segundo cérebro." />
+    <meta name="theme-color" content="#CBF045" />
+    <title>Nuckleo — Início</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body data-page="dashboard">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <div class="main-wrapper main-wrapper--with-rs">
+            <header class="topbar" id="topbar"></header>
+
+            <main class="dashboard">
+                <!-- Cabeçalho -->
+                <div class="dashboard-header">
+                    <div>
+                        <h1 class="dashboard-greeting" id="greeting">Bom dia! 👋</h1>
+                        <p class="dashboard-sub">
+                            Este é o seu segundo cérebro.<br />
+                            Organize, aprenda e compartilhe conhecimento.
+                        </p>
+                    </div>
+                    <button type="button" class="btn-new-item" id="btn-new-item" data-action="create-space">
+                        <i data-lucide="plus" class="icon-sm"></i>
+                        Novo Item
+                        <i data-lucide="chevron-down" class="icon-xs opacity-70"></i>
+                    </button>
+                </div>
+
+                <!-- Ações rápidas -->
+                <div class="quick-actions-grid" id="quick-actions"></div>
+
+                <!-- Meus Spaces -->
+                <section class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Meus Spaces</h2>
+                        <a href="./pages/spaces.html" class="link-primary-sm">Ver todos</a>
+                    </div>
+                    <div class="spaces-grid" id="spaces-grid"></div>
+                </section>
+
+                <!-- Recentes -->
+                <section class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Recentes</h2>
+                    </div>
+                    <div class="item-tabs" id="item-tabs"></div>
+                    <div class="recent-list" id="recent-list"></div>
+                </section>
+            </main>
+        </div>
+
+        <aside class="right-sidebar" id="right-sidebar"></aside>
+    </div>
+
+    <nav class="bottom-nav" id="bottom-nav"></nav>
+
+    <button type="button" class="ai-fab" id="ai-fab" aria-label="Abrir agente de IA">✦</button>
+    <div class="ai-panel" id="ai-panel">
+        <div class="ai-panel-header">
+            Agente Nuckleo
+            <button type="button" id="ai-close" aria-label="Fechar">✕</button>
+        </div>
+        <div class="ai-panel-messages" id="ai-messages">
+            <p>Pergunte sobre temas, espaços ou navegação.</p>
+        </div>
+        <form class="ai-panel-input" id="ai-form">
+            <input type="text" id="ai-input" placeholder="Sua dúvida..." autocomplete="off" />
+            <button type="submit" class="btn-primary">→</button>
+        </form>
+    </div>
+
+    <script src="./componentes/icons.js"></script>
+    <script src="./componentes/layout.js"></script>
+    <script src="./componentes/right-sidebar.js"></script>
+    <script src="./componentes/modals.js"></script>
+    <script src="./app.js"></script>
+    <script src="./pages/dashboard.js"></script>
+</body>
+</html>

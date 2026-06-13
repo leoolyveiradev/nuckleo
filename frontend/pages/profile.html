@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nuckleo — Meu Perfil</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+<body data-page="profile" data-page-path="pages">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar"></aside>
+        <div class="main-wrapper">
+            <header class="topbar" id="topbar"></header>
+            <main class="page-content" id="profile-content">
+                <!-- Profile content rendered by profile.js -->
+            </main>
+        </div>
+    </div>
+    <nav class="bottom-nav" id="bottom-nav"></nav>
+    <button class="ai-fab" id="ai-fab" aria-label="Agente IA">✦</button>
+    <div class="ai-panel" id="ai-panel">
+        <div class="ai-panel-header">Agente Nuckleo <button id="ai-close">✕</button></div>
+        <div class="ai-panel-messages" id="ai-messages"><p>Como posso ajudar?</p></div>
+        <form class="ai-panel-input" id="ai-form">
+            <input type="text" id="ai-input" placeholder="Sua dúvida..." />
+            <button type="submit" class="btn-primary">→</button>
+        </form>
+    </div>
+    <script src="../componentes/layout.js"></script>
+    <script src="../componentes/profile.js"></script>
+    <script src="../app.js"></script>
+</body>
+</html>

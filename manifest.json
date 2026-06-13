@@ -1,0 +1,54 @@
+{
+  "name": "Nuckleo",
+  "short_name": "Nuckleo",
+  "description": "Organize links, textos, arquivos e códigos em espaços personalizados. Compartilhe com amigos e mantenha tudo em um só lugar.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0D0D0D",
+  "theme_color": "#CBF045",
+  "categories": ["productivity", "social"],
+  "icons": [
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Início",
+      "short_name": "Início",
+      "description": "Abrir o painel principal",
+      "url": "/"
+    },
+    {
+      "name": "Espaços",
+      "short_name": "Espaços",
+      "description": "Ver seus espaços e pastas",
+      "url": "/spaces"
+    },
+    {
+      "name": "Favoritos",
+      "short_name": "Favoritos",
+      "description": "Acessar itens favoritos",
+      "url": "/favorites"
+    },
+    {
+      "name": "Notificações",
+      "short_name": "Notificações",
+      "description": "Ver notificações recentes",
+      "url": "/notifications"
+    }
+  ]
+}

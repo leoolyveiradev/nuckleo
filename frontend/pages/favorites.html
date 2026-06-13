@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nuckleo — Favoritos</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+<body data-page="favorites" data-page-path="pages">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar"></aside>
+        <div class="main-wrapper">
+            <header class="topbar" id="topbar"></header>
+            <main class="page-content">
+                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Favoritos</h1>
+                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Favorites.jsx</code></p>
+                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
+            </main>
+        </div>
+    </div>
+    <nav class="bottom-nav" id="bottom-nav"></nav>
+    <button class="ai-fab" id="ai-fab" aria-label="Agente IA">✦</button>
+    <div class="ai-panel" id="ai-panel">
+        <div class="ai-panel-header">Agente Nuckleo <button id="ai-close">✕</button></div>
+        <div class="ai-panel-messages" id="ai-messages"><p>Como posso ajudar?</p></div>
+        <form class="ai-panel-input" id="ai-form">
+            <input type="text" id="ai-input" placeholder="Sua dúvida..." />
+            <button type="submit" class="btn-primary">→</button>
+        </form>
+    </div>
+    <script src="../componentes/layout.js"></script>
+    <script src="../app.js"></script>
+</body>
+</html>
