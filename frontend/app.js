@@ -71,8 +71,30 @@ function initAiAgent() {
 
     if (!fab || !panel) return;
 
-    fab.addEventListener('click', () => panel.classList.toggle('open'));
-    closeBtn?.addEventListener('click', () => panel.classList.remove('open'));
+    const openPanel = () => {
+        panel.classList.add('open');
+        input?.focus();
+    };
+    const closePanel = () => panel.classList.remove('open');
+
+    fab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.contains('open') ? closePanel() : openPanel();
+    });
+    closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closePanel();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target) && !fab.contains(e.target)) {
+            closePanel();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePanel();
+    });
 
     form?.addEventListener('submit', async (e) => {
         e.preventDefault();

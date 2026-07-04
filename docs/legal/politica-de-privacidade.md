@@ -2,7 +2,7 @@
 
 **Última atualização:** junho de 2026  
 **Controlador:** Horbyon Studios  
-**Contato do Encarregado (DPO):** privacidade@horbyonstudios.com
+**Contato do Encarregado (DPO):** privacidade@nuckleo.com.br
 
 ---
 
@@ -86,7 +86,7 @@ Você pode solicitar, a qualquer momento:
 7. Informação sobre compartilhamentos  
 8. Revogação do consentimento  
 
-**Canal:** privacidade@horbyonstudios.com — prazo de resposta: até **15 dias**.
+**Canal:** privacidade@nuckleo.com.br — prazo de resposta: até **15 dias**.
 
 ---
 

@@ -19,9 +19,9 @@ const SPACE_EMOJI_BG = ['space-emoji--1', 'space-emoji--2', 'space-emoji--3', 's
 const AVATAR_COLORS = ['av--1', 'av--2', 'av--3'];
 
 const DEMO_SPACES = [
-    { id: 's1', title: 'Projetos pessoais', emoji: '🚀', item_count: 12, created_date: new Date().toISOString() },
-    { id: 's2', title: 'Estudos', emoji: '📚', item_count: 8, created_date: new Date().toISOString() },
-    { id: 's3', title: 'Referências', emoji: '💡', item_count: 5, created_date: new Date().toISOString() },
+    { id: 's1', title: 'Projetos pessoais', icon: 'rocket', item_count: 12, created_date: new Date().toISOString() },
+    { id: 's2', title: 'Estudos', icon: 'book', item_count: 8, created_date: new Date().toISOString() },
+    { id: 's3', title: 'Referências', icon: 'lightbulb', item_count: 5, created_date: new Date().toISOString() },
 ];
 
 const DEMO_ITEMS = [
@@ -41,9 +41,9 @@ let state = {
 function getGreeting(name) {
     const hour = new Date().getHours();
     const firstName = (name || 'Usuário').split(' ')[0];
-    if (hour < 12) return `Bom dia, ${firstName}! 👋`;
-    if (hour < 18) return `Boa tarde, ${firstName}! 👋`;
-    return `Boa noite, ${firstName}! 👋`;
+    if (hour < 12) return `Bom dia, ${firstName}!`;
+    if (hour < 18) return `Boa tarde, ${firstName}!`;
+    return `Boa noite, ${firstName}!`;
 }
 
 function formatDate(dateStr) {
@@ -120,7 +120,7 @@ function renderSpaces() {
     const chips = state.spaces.slice(0, 3).map((space, i) => `
         <a href="./pages/spaces.html?id=${space.id}" class="space-chip">
             <div class="space-chip-top">
-                <div class="space-emoji ${SPACE_EMOJI_BG[i % SPACE_EMOJI_BG.length]}">${space.emoji || '📁'}</div>
+                <div class="space-emoji ${SPACE_EMOJI_BG[i % SPACE_EMOJI_BG.length]}">${NuckleoIcons.icon(space.icon || 'folder')}</div>
                 <span class="text-dim-xs">${space.item_count || 0} itens</span>
             </div>
             <p class="space-chip-title">${space.title}</p>

@@ -11,11 +11,7 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content">
-                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Anotações</h1>
-                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Notes.jsx</code></p>
-                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
-            </main>
+            <main class="page-content" id="notes-content"></main>
         </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav"></nav>
@@ -28,7 +24,174 @@
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
     <script src="../app.js"></script>
+    <script src="../componentes/cards.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script>
+/**
+ * Notes - Bloco de anotações rápidas
+ */
+
+const NuckleoNotes = {
+    state: {
+        notes: [],
+        loading: false,
+    },
+
+    async init() {
+        const user = JSON.parse(localStorage.getItem('nuckleo_user') || '{}');
+        if (!user?.email) {
+            this.renderLoginRequired();
+            return;
+        }
+        this.state.user = user;
+        await this.loadData();
+        this.render();
+    },
+
+    async loadData() {
+        this.state.loading = true;
+        this.render();
+
+        try {
+            const res = await window.Nuckleo.apiFetch('/items?type=note');
+            this.state.notes = Array.isArray(res) ? res : [];
+        } catch (e) {
+            this.state.notes = [];
+        }
+
+        this.state.loading = false;
+    },
+
+    renderLoginRequired() {
+        const content = document.getElementById('notes-content');
+        content.innerHTML = '<div class="empty-state"><p class="text-muted">Faça login para criar anotações.</p></div>';
+    },
+
+    async createNote(title, content) {
+        if (!title.trim()) return;
+
+        const note = {
+            title: title.trim(),
+            content: content || '',
+            type: 'note',
+            user_email: this.state.user.email,
+            created_at: new Date().toISOString(),
+        };
+
+        await window.Nuckleo.apiFetch('/items', {
+            method: 'POST',
+            body: JSON.stringify(note),
+        });
+
+        await this.loadData();
+    },
+
+    async updateNote(id, title, content) {
+        await window.Nuckleo.apiFetch('/items/' + id, {
+            method: 'PATCH',
+            body: JSON.stringify({ title, content }),
+        });
+
+        await this.loadData();
+    },
+
+    async deleteNote(id) {
+        await window.Nuckleo.apiFetch('/items/' + id, {
+            method: 'DELETE',
+        });
+        await this.loadData();
+    },
+
+    render() {
+        const content = document.getElementById('notes-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="page-header">
+                <h1>${NuckleoIcons.icon('pen-line', 'icon')} Anotações</h1>
+                <p class="text-muted">Notas rápidas e ideias</p>
+            </div>
+
+            <button class="btn-primary" onclick="NuckleoNotes.showNoteModal()" style="margin-bottom:1rem;">
+                ${NuckleoIcons.icon('plus', 'icon-xs')} Nova Nota
+            </button>
+        `;
+
+        if (this.state.loading) {
+            content.innerHTML += '<div class="loading">Carregando...</div>';
+            return;
+        }
+
+        if (this.state.notes.length === 0) {
+            content.innerHTML += `
+                <div class="empty-state">
+                    ${NuckleoIcons.icon('pen-line', 'icon-lg')}
+                    <p>Nenhuma anotação ainda.</p>
+                    <p class="text-dim-sm">Crie Notas rápidas!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Grid de notas
+        content.innerHTML += `
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+                ${this.state.notes.map(note => `
+                    <div class="card" style="padding:1rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+                            <h3 style="font-size:0.875rem;font-weight:600;">${note.title}</h3>
+                            <div style="display:flex;gap:0.25rem;">
+                                <button class="btn-ghost btn-xs" onclick="NuckleoNotes.showNoteModal(${note.id}, ${JSON.stringify(note.title).replace(/"/g, '&quot;')}, ${JSON.stringify(note.content || '').replace(/"/g, '&quot;')})">${NuckleoIcons.icon('pencil', 'icon-xs')}</button>
+                                <button class="btn-ghost btn-xs" onclick="NuckleoNotes.deleteNote(${note.id})">${NuckleoIcons.icon('trash-2', 'icon-xs')}</button>
+                            </div>
+                        </div>
+                        <p class="text-muted" style="font-size:0.8125rem;white-space:pre-wrap;">${note.content || 'Sem conteúdo'}</p>
+                        <p class="text-dim-sm" style="font-size:0.6875rem;margin-top:0.75rem;">${new Date(note.created_at).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        NuckleoIcons.refreshIcons();
+    },
+
+    showNoteModal(id = null, title = '', content = '') {
+        const isEdit = id !== null;
+        const modal = window.NuckleoModals.create({
+            title: isEdit ? 'Editar Nota' : 'Nova Nota',
+            content: `
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Título</label>
+                        <input type="text" id="note-title" value="${title}" placeholder="Título da nota..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Conteúdo</label>
+                        <textarea id="note-content" rows="6" placeholder="Escreva sua nota..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);resize:vertical;font-family:inherit;">${content}</textarea>
+                    </div>
+                </div>
+            `,
+            onConfirm: async () => {
+                const newTitle = document.getElementById('note-title').value;
+                const newContent = document.getElementById('note-content').value;
+                if (isEdit) {
+                    await this.updateNote(id, newTitle, newContent);
+                } else {
+                    await this.createNote(newTitle, newContent);
+                }
+            },
+        });
+
+        window.NuckleoModals.show(modal);
+    },
+};
+
+window.NuckleoNotes = NuckleoNotes;
+
+document.addEventListener('DOMContentLoaded', () => NuckleoNotes.init());
+    </script>
 </body>
 </html>

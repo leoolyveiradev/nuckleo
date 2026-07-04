@@ -81,5 +81,4 @@ Podemos alterar estes termos. Uso continuado após notificação constitui aceit
 
 ## 11. Contato
 
-**Suporte:** suporte@horbyonstudios.com  
-**Questões legais:** juridico@horbyonstudios.com
+**Contato:** juridico@horbyon.com

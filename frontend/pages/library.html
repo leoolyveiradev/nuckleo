@@ -11,11 +11,7 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content">
-                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Livraria</h1>
-                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Library.jsx</code></p>
-                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
-            </main>
+            <main class="page-content" id="library-content"></main>
         </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav"></nav>
@@ -28,7 +24,207 @@
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
     <script src="../app.js"></script>
+    <script src="../componentes/cards.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script>
+/**
+ * Library - Gerenciamento de livros e materiais
+ */
+
+const NuckleoLibrary = {
+    state: {
+        books: [],
+        loading: false,
+        filter: 'all',
+    },
+
+    async init() {
+        await this.loadData();
+        this.render();
+    },
+
+    async loadData() {
+        this.state.loading = true;
+        this.render();
+
+        try {
+            const res = await window.Nuckleo.apiFetch('/items?type=book');
+            this.state.books = Array.isArray(res) ? res : [];
+        } catch (e) {
+            this.state.books = [];
+        }
+
+        this.state.loading = false;
+    },
+
+    setFilter(filter) {
+        this.state.filter = filter;
+        this.render();
+    },
+
+    async createBook(title, author, status, link) {
+        if (!title.trim()) return;
+
+        const book = {
+            title: title.trim(),
+            author: author || '',
+            status: status || 'to-read',
+            link: link || '',
+            type: 'book',
+            created_at: new Date().toISOString(),
+        };
+
+        await window.Nuckleo.apiFetch('/items', {
+            method: 'POST',
+            body: JSON.stringify(book),
+        });
+
+        await this.loadData();
+    },
+
+    async updateBook(id, data) {
+        await window.Nuckleo.apiFetch('/items/' + id, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+        await this.loadData();
+    },
+
+    async deleteBook(id) {
+        await window.Nuckleo.apiFetch('/items/' + id, {
+            method: 'DELETE',
+        });
+        await this.loadData();
+    },
+
+    getStatusLabel(status) {
+        const labels = { 'to-read': 'Para ler', reading: 'Lendo', done: 'Lido' };
+        return labels[status] || status;
+    },
+
+    getStatusColor(status) {
+        const colors = { 'to-read': '#6366f1', reading: '#f59e0b', done: '#22c55e' };
+        return colors[status] || '#6366f1';
+    },
+
+    render() {
+        const content = document.getElementById('library-content');
+        if (!content) return;
+
+        const filtered = this.state.filter === 'all'
+            ? this.state.books
+            : this.state.books.filter(b => b.status === this.state.filter);
+
+        content.innerHTML = `
+            <div class="page-header">
+                <h1>${NuckleoIcons.icon('book-open', 'icon')} Livraria</h1>
+                <p class="text-muted">Sua coleção de livros e materiais</p>
+            </div>
+
+            <button class="btn-primary" onclick="NuckleoLibrary.showBookModal()" style="margin-bottom:1rem;">
+                ${NuckleoIcons.icon('plus', 'icon-xs')} Novo Livro
+            </button>
+
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+                ${['all', 'to-read', 'reading', 'done'].map(s => `
+                    <button class="tab ${this.state.filter === s ? 'active' : ''}" onclick="NuckleoLibrary.setFilter('${s}')">
+                        ${s === 'all' ? 'Todos' : this.getStatusLabel(s)}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+
+        if (this.state.loading) {
+            content.innerHTML += '<div class="loading">Carregando...</div>';
+            return;
+        }
+
+        if (filtered.length === 0) {
+            content.innerHTML += `
+                <div class="empty-state">
+                    ${NuckleoIcons.icon('book-open', 'icon-lg')}
+                    <p>Nenhum livro na biblioteca.</p>
+                    <p class="text-dim-sm">Adicione seus primeiros livros!</p>
+                </div>
+            `;
+            return;
+        }
+
+        content.innerHTML += `
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+                ${filtered.map(book => `
+                    <div class="card" style="padding:1rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+                            <span class="badge" style="background:${this.getStatusColor(book.status)}22;color:${this.getStatusColor(book.status)}">
+                                ${this.getStatusLabel(book.status)}
+                            </span>
+                            <div style="display:flex;gap:0.25rem;">
+                                <button class="btn-ghost btn-xs" onclick="NuckleoLibrary.showBookModal(${book.id}, ${JSON.stringify(book.title).replace(/"/g, '&quot;')}, ${JSON.stringify(book.author || '').replace(/"/g, '&quot;')}, ${JSON.stringify(book.status).replace(/"/g, '&quot;')}, ${JSON.stringify(book.link || '').replace(/"/g, '&quot;')})">${NuckleoIcons.icon('pencil', 'icon-xs')}</button>
+                                <button class="btn-ghost btn-xs" onclick="NuckleoLibrary.deleteBook(${book.id})">${NuckleoIcons.icon('trash-2', 'icon-xs')}</button>
+                            </div>
+                        </div>
+                        <h3 style="font-size:0.9375rem;font-weight:600;margin-bottom:0.25rem;">${book.title}</h3>
+                        <p class="text-muted" style="font-size:0.8125rem;">${book.author || 'Autor desconhecido'}</p>
+                        ${book.link ? `<a href="${book.link}" target="_blank" style="font-size:0.75rem;color:var(--primary);display:block;margin-top:0.5rem;">Ver material →</a>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        NuckleoIcons.refreshIcons();
+    },
+
+    showBookModal(id = null, title = '', author = '', status = 'to-read', link = '') {
+        const isEdit = id !== null;
+        const modal = window.NuckleoModals.create({
+            title: isEdit ? 'Editar Livro' : 'Novo Livro',
+            content: `
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Título</label>
+                        <input type="text" id="book-title" value="${title}" placeholder="Título do livro..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Autor</label>
+                        <input type="text" id="book-author" value="${author}" placeholder="Autor..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Status</label>
+                        <select id="book-status" style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);">
+                            <option value="to-read" ${status === 'to-read' ? 'selected' : ''}>Para ler</option>
+                            <option value="reading" ${status === 'reading' ? 'selected' : ''}>Lendo</option>
+                            <option value="done" ${status === 'done' ? 'selected' : ''}>Lido</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Link (opcional)</label>
+                        <input type="url" id="book-link" value="${link}" placeholder="https://..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                    </div>
+                </div>
+            `,
+            onConfirm: async () => {
+                const newTitle = document.getElementById('book-title').value;
+                const newAuthor = document.getElementById('book-author').value;
+                const newStatus = document.getElementById('book-status').value;
+                const newLink = document.getElementById('book-link').value;
+                if (isEdit) {
+                    await this.updateBook(id, { title: newTitle, author: newAuthor, status: newStatus, link: newLink });
+                } else {
+                    await this.createBook(newTitle, newAuthor, newStatus, newLink);
+                }
+            },
+        });
+
+        window.NuckleoModals.show(modal);
+    },
+};
+
+window.NuckleoLibrary = NuckleoLibrary;
+
+document.addEventListener('DOMContentLoaded', () => NuckleoLibrary.init());
+    </script>
 </body>
 </html>

@@ -16,7 +16,7 @@ function renderItemCard(item) {
         <article class="card" data-item-id="${item.id}" style="cursor:pointer;">
             <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;">
                 <span class="badge" style="color:${cfg.color}">${cfg.label}</span>
-                ${item.is_favorite ? '<span style="color:var(--primary)">★</span>' : ''}
+                ${item.is_favorite ? NuckleoIcons.icon('star', 'icon-sm') : ''}
             </div>
             <h3 style="font-size:0.875rem;font-weight:600;">${item.title}</h3>
         </article>
@@ -26,7 +26,7 @@ function renderItemCard(item) {
 function renderSpaceCard(space) {
     return `
         <article class="card" data-space-id="${space.id}" style="cursor:pointer;">
-            <div style="font-size:1.5rem;margin-bottom:0.5rem;">${space.emoji || '📁'}</div>
+            <div style="margin-bottom:0.5rem;">${NuckleoIcons.icon(space.icon || 'folder', 'icon-lg')}</div>
             <h3 style="font-size:0.8125rem;font-weight:600;">${space.title}</h3>
             <p class="text-muted" style="font-size:0.6875rem;margin-top:0.25rem;">${space.item_count || 0} itens</p>
         </article>

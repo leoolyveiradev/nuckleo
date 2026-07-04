@@ -21,5 +21,5 @@ Cada documento legal deve ter uma versão HTML em `frontend/pages/legal/` com li
 
 ## Responsável
 
-**Controlador:** Horbyon Studios  
-**Canal LGPD:** privacidade@horbyonstudios.com
+**Controlador:** Horbyon  
+**Canal LGPD:** privacidade@nuckleo.com.br

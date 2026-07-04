@@ -84,9 +84,9 @@ const NuckleoProfile = {
         const handle = this.getHandle();
 
         const stats = [
-            { label: 'Espaços', value: this.state.spaces.length, icon: '📁' },
-            { label: 'Itens', value: this.state.items.length, icon: '📝' },
-            { label: 'Amigos', value: this.getFriendCount(), icon: '👥' },
+            { label: 'Espaços', value: this.state.spaces.length, icon: 'folder' },
+            { label: 'Itens', value: this.state.items.length, icon: 'file-text' },
+            { label: 'Amigos', value: this.getFriendCount(), icon: 'users' },
         ];
 
         const tabs = [
@@ -117,8 +117,8 @@ const NuckleoProfile = {
                             <p class="profile-handle">@${handle}</p>
                             ${u?.bio ? `<p class="profile-bio">${u.bio}</p>` : ''}
                             <div class="profile-meta">
-                                ${u?.created_date ? `<span>📅 Entrou em ${this.formatDate(u.created_date)}</span>` : ''}
-                                <span>🔗 nuckleo.app/u/${handle}</span>
+                                ${u?.created_date ? `<span>${NuckleoIcons.icon('calendar', 'icon-xs')} Entrou em ${this.formatDate(u.created_date)}</span>` : ''}
+                                <span>${NuckleoIcons.icon('link', 'icon-xs')} nuckleo.app/u/${handle}</span>
                             </div>
                         </div>
                         <button class="btn-outline" onclick="NuckleoProfile.toggleEdit()">
@@ -132,7 +132,7 @@ const NuckleoProfile = {
                 <div class="profile-stats">
                     ${stats.map(s => `
                         <button class="stat-item" onclick="NuckleoProfile.setTab('${s.label === 'Amigos' ? 'spaces' : s.label.toLowerCase()}')">
-                            <span class="stat-icon">${s.icon}</span>
+                            <span class="stat-icon">${NuckleoIcons.icon(s.icon, 'icon-sm')}</span>
                             <span class="stat-value">${s.value}</span>
                             <span class="stat-label">${s.label}</span>
                         </button>
@@ -196,7 +196,7 @@ const NuckleoProfile = {
     renderSpaceCard(space) {
         return `
             <div class="space-card" onclick="window.location.href='/pages/space.html?id=${space.id}'">
-                <span class="space-emoji">${space.emoji || '📁'}</span>
+                <span class="space-icon">${NuckleoIcons.icon(space.icon || 'folder', 'icon-md')}</span>
                 <h3>${space.title}</h3>
                 <p class="space-count">${space.item_count || 0} itens</p>
                 ${space.visibility === 'public' ? `<span class="space-visibility">${NuckleoIcons.icon('globe', 'icon-xs')}</span>` : ''}
@@ -211,7 +211,7 @@ const NuckleoProfile = {
                 <span class="item-type-badge">${labels[item.type] || 'Item'}</span>
                 <h3>${item.title}</h3>
                 <p class="item-preview">${item.content?.substring(0, 80) || 'Sem conteúdo'}</p>
-                ${item.is_favorite ? `<span class="item-favorite">★</span>` : ''}
+                ${item.is_favorite ? `<span class="item-favorite">${NuckleoIcons.icon('star', 'icon-sm')}</span>` : ''}
             </div>
         `;
     },

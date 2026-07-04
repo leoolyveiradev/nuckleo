@@ -2,7 +2,7 @@
  * Modais — portados de CreateSpaceModal, CreateItemModal, ItemDetailModal
  */
 
-const SPACE_EMOJIS = ['📁', '💡', '🚀', '📚', '🎯', '🔬', '🎨', '💻', '🎵', '📝', '🌍', '⚡'];
+const SPACE_ICONS = ['folder', 'lightbulb', 'rocket', 'book', 'target', 'flask', 'palette', 'code', 'music', 'file-text', 'globe', 'zap'];
 
 function ensureModalRoot() {
     let overlay = document.getElementById('nuckleo-modal');
@@ -33,8 +33,8 @@ function closeModal() {
 }
 
 function openCreateSpaceModal() {
-    const emojiPicker = SPACE_EMOJIS.map((e) =>
-        `<button type="button" class="emoji-btn" data-emoji="${e}">${e}</button>`
+    const iconPicker = SPACE_ICONS.map((icon) =>
+        `<button type="button" class="icon-btn" data-icon="${icon}">${NuckleoIcons.icon(icon)}</button>`
     ).join('');
 
     openModal(`
@@ -45,8 +45,8 @@ function openCreateSpaceModal() {
         <form class="modal-form" id="form-create-space">
             <div class="form-group">
                 <label>Ícone</label>
-                <div class="emoji-grid" id="emoji-grid">${emojiPicker}</div>
-                <input type="hidden" name="emoji" id="space-emoji" value="📁" />
+                <div class="icon-grid" id="icon-grid">${iconPicker}</div>
+                <input type="hidden" name="icon" id="space-icon" value="folder" />
             </div>
             <div class="form-group">
                 <label>Nome do espaço</label>
@@ -72,18 +72,18 @@ function openCreateSpaceModal() {
         </form>
     `);
 
-    let selectedEmoji = '📁';
+    let selectedIcon = 'folder';
     let visibility = 'private';
 
-    document.querySelectorAll('.emoji-btn').forEach((btn) => {
+    document.querySelectorAll('.icon-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.emoji-btn').forEach((b) => b.classList.remove('emoji-btn--active'));
-            btn.classList.add('emoji-btn--active');
-            selectedEmoji = btn.dataset.emoji;
-            document.getElementById('space-emoji').value = selectedEmoji;
+            document.querySelectorAll('.icon-btn').forEach((b) => b.classList.remove('icon-btn--active'));
+            btn.classList.add('icon-btn--active');
+            selectedIcon = btn.dataset.icon;
+            document.getElementById('space-icon').value = selectedIcon;
         });
     });
-    document.querySelector('.emoji-btn')?.classList.add('emoji-btn--active');
+    document.querySelector('.icon-btn')?.classList.add('icon-btn--active');
 
     document.querySelectorAll('.vis-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -101,7 +101,7 @@ function openCreateSpaceModal() {
             id: 's' + Date.now(),
             title: fd.get('title'),
             description: fd.get('description') || '',
-            emoji: selectedEmoji,
+            icon: selectedIcon,
             visibility,
             tags: (fd.get('tags') || '').split(',').map((t) => t.trim()).filter(Boolean),
             item_count: 0,
@@ -270,10 +270,10 @@ const NuckleoSearch = {
 
         if (spaces.length > 0) {
             html += `<div class="search-section">
-                <div class="search-section-title">📁 Espaços</div>
+                <div class="search-section-title">${NuckleoIcons.icon('folder', 'icon-sm')} Espaços</div>
                 ${spaces.map(s => `
                     <button class="search-result" onclick="window.location.href='/pages/space.html?id=${s.id}'">
-                        <span>${s.emoji || '📁'}</span>
+                        <span>${NuckleoIcons.icon(s.icon || 'folder', 'icon-sm')}</span>
                         <div class="search-result-content">
                             <span class="search-result-label">${s.title}</span>
                             <span class="search-result-sub">${s.item_count || 0} itens</span>
@@ -285,10 +285,10 @@ const NuckleoSearch = {
 
         if (items.length > 0) {
             html += `<div class="search-section">
-                <div class="search-section-title">📝 Itens</div>
+                <div class="search-section-title">${NuckleoIcons.icon('file-text', 'icon-sm')} Itens</div>
                 ${items.map(i => `
                     <button class="search-result" onclick="NuckleoModals.openItemDetailModal(${JSON.stringify(i).replace(/"/g, '&quot;')})">
-                        <span class="item-type-badge">${i.type === 'note' ? '📝' : i.type === 'link' ? '🔗' : i.type === 'code' ? '💻' : '📎'}</span>
+                        <span class="item-type-badge">${NuckleoIcons.icon(i.type === 'note' ? 'file-text' : i.type === 'link' ? 'link' : i.type === 'code' ? 'code' : 'paperclip', 'icon-sm')}</span>
                         <div class="search-result-content">
                             <span class="search-result-label">${i.title}</span>
                             <span class="search-result-sub">${i.type}</span>
@@ -300,12 +300,12 @@ const NuckleoSearch = {
 
         if (users.length > 0) {
             html += `<div class="search-section">
-                <div class="search-section-title">👤 Usuários</div>
+                <div class="search-section-title">${NuckleoIcons.icon('users', 'icon-sm')} Usuários</div>
                 ${users.map(u => {
                     const handle = u.username || u.email?.split('@')[0];
                     return `
                         <button class="search-result" onclick="window.location.href='/pages/user-profile.html?u=${handle}'">
-                            <span class="user-avatar">${u.full_name?.charAt(0) || '?'}</span>
+                            <span class="user-avatar">${NuckleoIcons.icon('user', 'icon-sm')}</span>
                             <div class="search-result-content">
                                 <span class="search-result-label">${u.full_name || u.email}</span>
                                 <span class="search-result-sub">@${handle}</span>

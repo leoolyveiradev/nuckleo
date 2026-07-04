@@ -667,6 +667,19 @@ img {
     font-size: 0.875rem;
 }
 
+html, body, .app-shell, .main-wrapper, .main-wrapper--with-rs, .sidebar, .right-sidebar, .dashboard, .spaces-grid, .recent-list, .item-tabs, .ai-panel-messages {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
 /* Agente de IA — painel flutuante */
 .ai-panel {
     position: fixed;
@@ -699,6 +712,22 @@ img {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
+}
+
+.ai-panel-close {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0.2rem 0.35rem;
+    border-radius: 0.35rem;
+}
+
+.ai-panel-close:hover {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--text-main);
 }
 
 .ai-panel-messages {

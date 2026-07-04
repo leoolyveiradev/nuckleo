@@ -11,11 +11,7 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content">
-                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Templates</h1>
-                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Templates.jsx</code></p>
-                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
-            </main>
+            <main class="page-content" id="templates-content"></main>
         </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav"></nav>
@@ -28,7 +24,220 @@
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
     <script src="../app.js"></script>
+    <script src="../componentes/cards.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script>
+/**
+ * Templates - Modelos de espaços e itens
+ */
+
+const NuckleoTemplates = {
+    state: {
+        templates: [],
+        loading: false,
+    },
+
+    defaultTemplates: [
+        // Modelos de Espaço
+        { id: 'space-proj', name: 'Projeto', icon: 'folder-kanban', description: 'Organize um projeto com tarefas e notas', type: 'space', color: '#6366f1' },
+        { id: 'space-study', name: 'Estudos', icon: 'book-open', description: 'Area de estudo com materiais e anotações', type: 'space', color: '#14b8a6' },
+        { id: 'space-work', name: 'Trabalho', icon: 'briefcase', description: 'Espaço profissional', type: 'space', color: '#f59e0b' },
+        { id: 'space-personal', name: 'Pessoal', icon: 'user', description: 'Lista pessoal e ideias', type: 'space', color: '#ec4899' },
+        // Modelos de Item
+        { id: 'item-note', name: 'Nota', icon: 'sticky-note', description: 'Anotação rápida', type: 'item', color: '#6366f1' },
+        { id: 'item-link', name: 'Link', icon: 'link', description: 'Bookmark salvo', type: 'item', color: '#14b8a6' },
+        { id: 'item-code', name: 'Código', icon: 'code', description: 'Snippet de código', type: 'item', color: '#f59e0b' },
+        { id: 'item-file', name: 'Arquivo', icon: 'file', description: 'Arquivo ou documento', type: 'item', color: '#8b5cf6' },
+    ],
+
+    async init() {
+        await this.loadData();
+        this.render();
+    },
+
+    async loadData() {
+        this.state.loading = true;
+        this.render();
+
+        try {
+            const res = await window.Nuckleo.apiFetch('/templates');
+            this.state.templates = Array.isArray(res) ? res : [];
+        } catch (e) {
+            this.state.templates = [];
+        }
+
+        this.state.loading = false;
+    },
+
+    getAllTemplates() {
+        return [...this.defaultTemplates, ...this.state.templates];
+    },
+
+    async createTemplate(name, description, type, icon, color) {
+        if (!name.trim()) return;
+
+        const template = {
+            name: name.trim(),
+            description: description || '',
+            type: type || 'space',
+            icon: icon || 'folder',
+            color: color || '#6366f1',
+            created_at: new Date().toISOString(),
+        };
+
+        await window.Nuckleo.apiFetch('/templates', {
+            method: 'POST',
+            body: JSON.stringify(template),
+        });
+
+        await this.loadData();
+    },
+
+    async deleteTemplate(id) {
+        await window.Nuckleo.apiFetch('/templates/' + id, {
+            method: 'DELETE',
+        });
+        await this.loadData();
+    },
+
+    async useTemplate(template) {
+        if (template.type === 'space') {
+            // Cria novo espaço com base no template
+            const space = {
+                title: template.name,
+                description: template.description,
+                icon: template.icon,
+                color: template.color,
+            };
+            await window.Nuckleo.apiFetch('/spaces', {
+                method: 'POST',
+                body: JSON.stringify(space),
+            });
+            alert('Espaço "' + template.name + '" criado! Acesse Espaços para ver.');
+        } else {
+            // Abre modal para criar item
+            const item = {
+                title: template.name,
+                type: 'note',
+                content: template.description,
+            };
+            await window.Nuckleo.apiFetch('/items', {
+                method: 'POST',
+                body: JSON.stringify(item),
+            });
+            alert('Item "' + template.name + '" criado! Acesse Itens para ver.');
+        }
+    },
+
+    render() {
+        const content = document.getElementById('templates-content');
+        if (!content) return;
+
+        const allTemplates = this.getAllTemplates();
+        const spaceTemplates = allTemplates.filter(t => t.type === 'space');
+        const itemTemplates = allTemplates.filter(t => t.type === 'item');
+
+        content.innerHTML = `
+            <div class="page-header">
+                <h1>${NuckleoIcons.icon('layout-template', 'icon')} Templates</h1>
+                <p class="text-muted">Modelos prontos para usar</p>
+            </div>
+
+            <button class="btn-primary" onclick="NuckleoTemplates.showCreateModal()" style="margin-bottom:1.5rem;">
+                ${NuckleoIcons.icon('plus', 'icon-xs')} Novo Template
+            </button>
+        `;
+
+        if (this.state.loading) {
+            content.innerHTML += '<div class="loading">Carregando...</div>';
+            return;
+        }
+
+        // Modelos de Espaço
+        content.innerHTML += `
+            <h2 style="font-size:0.875rem;margin-bottom:0.75rem;">Modelos de Espaço</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
+                ${spaceTemplates.map(t => `
+                    <div class="card" style="cursor:pointer;padding:1rem;border-left:3px solid ${t.color};">
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                            ${NuckleoIcons.icon(t.icon || 'folder', 'icon-sm')}
+                            <strong style="font-size:0.875rem;">${t.name}</strong>
+                        </div>
+                        <p class="text-muted" style="font-size:0.75rem;">${t.description || ''}</p>
+                        <button class="btn-primary btn-sm" onclick="event.stopPropagation();NuckleoTemplates.useTemplate(${JSON.stringify(t).replace(/"/g, '&quot;')})" style="margin-top:0.75rem;">
+                            ${NuckleoIcons.icon('plus', 'icon-xs')} Usar
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Modelos de Item
+        content.innerHTML += `
+            <h2 style="font-size:0.875rem;margin-bottom:0.75rem;">Modelos de Item</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;">
+                ${itemTemplates.map(t => `
+                    <div class="card" style="cursor:pointer;padding:1rem;border-left:3px solid ${t.color};">
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                            ${NuckleoIcons.icon(t.icon || 'file', 'icon-sm')}
+                            <strong style="font-size:0.875rem;">${t.name}</strong>
+                        </div>
+                        <p class="text-muted" style="font-size:0.75rem;">${t.description || ''}</p>
+                        <button class="btn-primary btn-sm" onclick="event.stopPropagation();NuckleoTemplates.useTemplate(${JSON.stringify(t).replace(/"/g, '&quot;')})" style="margin-top:0.75rem;">
+                            ${NuckleoIcons.icon('plus', 'icon-xs')} Usar
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        NuckleoIcons.refreshIcons();
+    },
+
+    showCreateModal() {
+        const typeOptions = [
+            { value: 'space', label: 'Espaço' },
+            { value: 'item', label: 'Item' },
+        ];
+
+        const modal = window.NuckleoModals.create({
+            title: 'Novo Template',
+            content: `
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Nome</label>
+                        <input type="text" id="template-name" placeholder="Nome do template..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Descrição</label>
+                        <input type="text" id="template-desc" placeholder="Descrição..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Tipo</label>
+                        <select id="template-type" style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);">
+                            ${typeOptions.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            `,
+            onConfirm: async () => {
+                const name = document.getElementById('template-name').value;
+                const desc = document.getElementById('template-desc').value;
+                const type = document.getElementById('template-type').value;
+                await this.createTemplate(name, desc, type);
+            },
+        });
+
+        window.NuckleoModals.show(modal);
+    },
+};
+
+window.NuckleoTemplates = NuckleoTemplates;
+
+document.addEventListener('DOMContentLoaded', () => NuckleoTemplates.init());
+    </script>
 </body>
 </html>

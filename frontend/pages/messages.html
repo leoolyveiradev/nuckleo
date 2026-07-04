@@ -11,11 +11,7 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content">
-                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Mensagens</h1>
-                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Messages.jsx</code></p>
-                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
-            </main>
+            <main class="page-content" id="messages-content"></main>
         </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav"></nav>
@@ -28,7 +24,211 @@
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
     <script src="../app.js"></script>
+    <script src="../componentes/cards.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script>
+/**
+ * Messages - Sistema de mensagens direto (estilo inbox)
+ */
+
+const NuckleoMessages = {
+    state: {
+        conversations: [],
+        allUsers: [],
+        loading: false,
+        activeChat: null,
+        user: null,
+    },
+
+    async init() {
+        const user = JSON.parse(localStorage.getItem('nuckleo_user') || '{}');
+        if (!user?.email) {
+            this.renderLoginRequired();
+            return;
+        }
+        this.state.user = user;
+        await this.loadData();
+        this.render();
+    },
+
+    async loadData() {
+        this.state.loading = true;
+        this.render();
+
+        try {
+            const [convRes, usersRes] = await Promise.all([
+                window.Nuckleo.apiFetch('/messages'),
+                window.Nuckleo.apiFetch('/users'),
+            ]);
+            this.state.conversations = Array.isArray(convRes) ? convRes : [];
+            this.state.allUsers = Array.isArray(usersRes) ? usersRes.filter(u => u.email !== this.state.user.email) : [];
+        } catch (e) {
+            this.state.conversations = [];
+            this.state.allUsers = [];
+        }
+
+        this.state.loading = false;
+    },
+
+    renderLoginRequired() {
+        const content = document.getElementById('messages-content');
+        content.innerHTML = '<div class="empty-state"><p class="text-muted">Faça login para enviar mensagens.</p></div>';
+    },
+
+    getUser(email) {
+        return this.state.allUsers.find(u => u.email === email);
+    },
+
+    getOtherUser(conv) {
+        const otherEmail = conv.from_user === this.state.user.email ? conv.to_user : conv.from_user;
+        return this.getUser(otherEmail) || { email: otherEmail, full_name: otherEmail.split('@')[0] };
+    },
+
+    setActiveChat(chatId) {
+        this.state.activeChat = chatId;
+        this.render();
+    },
+
+    async sendMessage(toEmail, text) {
+        if (!text.trim()) return;
+
+        const message = {
+            from_user: this.state.user.email,
+            from_name: this.state.user.full_name,
+            to_user: toEmail,
+            text: text.trim(),
+            created_at: new Date().toISOString(),
+        };
+
+        await window.Nuckleo.apiFetch('/messages', {
+            method: 'POST',
+            body: JSON.stringify(message),
+        });
+
+        await this.loadData();
+    },
+
+    render() {
+        const content = document.getElementById('messages-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="page-header">
+                <h1>${NuckleoIcons.icon('messages-square', 'icon')} Mensagens</h1>
+                <p class="text-muted">Conversas diretas</p>
+            </div>
+
+            <button class="btn-primary" onclick="NuckleoMessages.showNewChatModal()" style="margin-bottom:1rem;">
+                ${NuckleoIcons.icon('edit', 'icon-xs')} Nova Conversa
+            </button>
+        `;
+
+        if (this.state.loading) {
+            content.innerHTML += '<div class="loading">Carregando...</div>';
+            return;
+        }
+
+        if (this.state.conversations.length === 0) {
+            content.innerHTML += `
+                <div class="empty-state">
+                    ${NuckleoIcons.icon('messages-square', 'icon-lg')}
+                    <p>Nenhuma conversa ainda.</p>
+                    <p class="text-dim-sm">Inicie uma nova conversa!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Lista de conversas (estilo inbox horizontal)
+        content.innerHTML += `
+            <div style="display:flex;gap:1rem;flex-direction:column;">
+                ${this.state.conversations.map(conv => {
+                    const other = this.getOtherUser(conv);
+                    const isActive = this.state.activeChat === conv.id;
+                    return `
+                        <div class="card ${isActive ? 'active' : ''}" onclick="NuckleoMessages.setActiveChat(${conv.id})" style="padding:1rem;cursor:pointer;${isActive ? 'border-color:var(--primary);' : ''}">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <strong style="font-size:0.9375rem;">${other.full_name || other.email}</strong>
+                                    <p class="text-muted" style="font-size:0.8125rem;margin-top:0.25rem;">${conv.last_message || '...'}</p>
+                                </div>
+                                <span class="text-dim-sm">${new Date(conv.last_at || conv.created_at).toLocaleDateString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        // Chat ativo
+        if (this.state.activeChat) {
+            const conv = this.state.conversations.find(c => c.id === this.state.activeChat);
+            if (conv) {
+                const other = this.getOtherUser(conv);
+                content.innerHTML += `
+                    <div style="margin-top:1.5rem;padding:1rem;border:1px solid var(--border);border-radius:0.75rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">
+                            <strong>${other.full_name || other.email}</strong>
+                            <span class="text-dim-sm">${other.email}</span>
+                        </div>
+                        <div style="min-height:120px;margin-bottom:1rem;p:0.5rem;background:var(--bg-secondary);border-radius:0.5rem;">
+                            <p class="text-muted">${conv.last_message || 'Nenhuma mensagem'}</p>
+                        </div>
+                        <div style="display:flex;gap:0.5rem;">
+                            <input type="text" id="msg-input-${conv.id}" placeholder="Digite sua mensagem..." style="flex:1;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);" />
+                            <button class="btn-primary" onclick="NuckleoMessages.sendMsgTo(${JSON.stringify(conv.to_user === this.state.user.email ? conv.from_user : conv.to_user).replace(/"/g, '&quot;')}, document.getElementById('msg-input-${conv.id}').value)">${NuckleoIcons.icon('send', 'icon-xs')}</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        NuckleoIcons.refreshIcons();
+    },
+
+    sendMsgTo(email, text) {
+        this.sendMessage(email, text);
+    },
+
+    showNewChatModal() {
+        if (this.state.allUsers.length === 0) {
+            alert('Nenhum usuário disponível para conversar.');
+            return;
+        }
+
+        const modal = window.NuckleoModals.create({
+            title: 'Nova Conversa',
+            content: `
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Destinatário</label>
+                        <select id="msg-to" style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);">
+                            ${this.state.allUsers.map(u => `<option value="${u.email}">${u.full_name || u.email}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.75rem;margin-bottom:0.375rem;">Mensagem</label>
+                        <textarea id="msg-text" rows="4" placeholder="Digite sua mensagem..." style="width:100%;padding:0.5rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);resize:vertical;"></textarea>
+                    </div>
+                </div>
+            `,
+            onConfirm: async () => {
+                const toEmail = document.getElementById('msg-to').value;
+                const text = document.getElementById('msg-text').value;
+                await this.sendMessage(toEmail, text);
+            },
+        });
+
+        window.NuckleoModals.show(modal);
+    },
+};
+
+window.NuckleoMessages = NuckleoMessages;
+
+document.addEventListener('DOMContentLoaded', () => NuckleoMessages.init());
+    </script>
 </body>
 </html>

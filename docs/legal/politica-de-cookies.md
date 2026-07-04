@@ -31,7 +31,7 @@ Atualmente não utilizamos cookies de publicidade. Se integrarmos analytics (ex.
 
 - **Banner de cookies** — aceitar ou recusar cookies não essenciais no primeiro acesso.
 - **Navegador** — configurações > privacidade > cookies.
-- **Revogação** — e-mail para privacidade@horbyonstudios.com.
+- **Revogação** — e-mail para privacidade@nuckleo.com.br.
 
 Recusar cookies essenciais pode impedir o login.
 
@@ -45,4 +45,4 @@ Além de cookies, usamos `localStorage` para cache de preferências do agente de
 
 ## Contato
 
-privacidade@horbyonstudios.com
+privacidade@nuckleo.com.br

@@ -10,7 +10,7 @@ Aplicável a todos os usuários, colaboradores e parceiros da comunidade Nuckleo
 2. **Inclusão** — não toleramos assédio, discriminação ou intimidação.
 3. **Colaboração** — feedback construtivo em espaços compartilhados.
 4. **Transparência** — não se passe por outra pessoa ou marca.
-5. **Segurança** — reporte vulnerabilidades de forma responsável: security@horbyonstudios.com
+5. **Segurança** — reporte vulnerabilidades de forma responsável: security@nuckleo.com.br
 
 ---
 
@@ -22,7 +22,7 @@ Proibido: insultos repetidos, ameaças, stalking, doxxing, conteúdo sexual não
 
 ## Aplicação
 
-Moderadores e equipe Horbyon Studios podem aplicar sanções conforme gravidade. Decisões podem ser contestadas em abuso@horbyonstudios.com em até 10 dias.
+Moderadores e equipe Horbyon Studios podem aplicar sanções conforme gravidade. Decisões podem ser contestadas em juridico@horbyon.com em até 10 dias.
 
 ---
 

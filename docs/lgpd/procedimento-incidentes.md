@@ -29,7 +29,7 @@ Incidente = acesso não autorizado, vazamento, perda ou alteração indevida de 
 
 ## 4. Comunicação ao titular (modelo)
 
-> Identificamos um incidente de segurança em [data] que pode ter afetado [dados]. Tomamos as medidas [X]. Recomendamos [alterar senha]. Contato: privacidade@horbyonstudios.com
+> Identificamos um incidente de segurança em [data] que pode ter afetado [dados]. Tomamos as medidas [X]. Recomendamos [alterar senha]. Contato: juridico@horbyon.com
 
 ---
 

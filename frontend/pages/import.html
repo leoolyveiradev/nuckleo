@@ -11,11 +11,7 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content">
-                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Importar</h1>
-                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Import.jsx</code></p>
-                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
-            </main>
+            <main class="page-content" id="import-content"></main>
         </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav"></nav>
@@ -28,7 +24,248 @@
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
     <script src="../app.js"></script>
+    <script src="../componentes/cards.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script>
+/**
+ * Import - Importar dados de CSV e outras ferramentas
+ */
+
+const NuckleoImport = {
+    state: {
+        importing: false,
+        importResult: null,
+    },
+
+    init() {
+        this.render();
+    },
+
+    parseCSV(text) {
+        const lines = text.trim().split('\n');
+        if (lines.length < 2) return { headers: [], rows: [] };
+
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        const rows = lines.slice(1).map(line => {
+            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+            const row = {};
+            headers.forEach((h, i) => {
+                row[h] = values[i] || '';
+            });
+            return row;
+        });
+
+        return { headers, rows };
+    },
+
+    async importItems(rows) {
+        const imported = [];
+        for (const row of rows) {
+            const title = row.title || row.Title || row.titulo || row.name || row.Name || '';
+            const content = row.content || row.Content || row.descricao || row.description || row.descrição || '';
+            const link = row.link || row.Link || row.url || row.URL || '';
+
+            if (title) {
+                const item = {
+                    title,
+                    content: content || link,
+                    type: link ? 'link' : 'note',
+                    created_at: new Date().toISOString(),
+                };
+                await window.Nuckleo.apiFetch('/items', {
+                    method: 'POST',
+                    body: JSON.stringify(item),
+                });
+                imported.push(title);
+            }
+        }
+        return imported;
+    },
+
+    async importSpaces(rows) {
+        const imported = [];
+        for (const row of rows) {
+            const title = row.title || row.Title || row.name || row.Name || '';
+            const description = row.description || row.Description || row.descricao || row.descrição || '';
+            const icon = row.icon || row.Icon || 'folder';
+
+            if (title) {
+                const space = {
+                    title,
+                    description,
+                    icon,
+                    created_at: new Date().toISOString(),
+                };
+                await window.Nuckleo.apiFetch('/spaces', {
+                    method: 'POST',
+                    body: JSON.stringify(space),
+                });
+                imported.push(title);
+            }
+        }
+        return imported;
+    },
+
+    async importTags(rows) {
+        const imported = [];
+        for (const row of rows) {
+            const name = row.name || row.Name || row.tag || row.Tag || '';
+            const color = row.color || row.Color || '#6366f1';
+
+            if (name) {
+                const tag = {
+                    name,
+                    color,
+                    created_at: new Date().toISOString(),
+                };
+                await window.Nuckleo.apiFetch('/tags', {
+                    method: 'POST',
+                    body: JSON.stringify(tag),
+                });
+                imported.push(name);
+            }
+        }
+        return imported;
+    },
+
+    async importFromFile(file, type) {
+        this.state.importing = true;
+        this.render();
+
+        const text = await file.text();
+        const { headers, rows } = this.parseCSV(text);
+
+        if (rows.length === 0) {
+            alert('Nenhum dado encontrado no arquivo.');
+            this.state.importing = false;
+            this.render();
+            return;
+        }
+
+        let imported = [];
+        try {
+            if (type === 'items') {
+                imported = await this.importItems(rows);
+            } else if (type === 'spaces') {
+                imported = await this.importSpaces(rows);
+            } else if (type === 'tags') {
+                imported = await this.importTags(rows);
+            }
+        } catch (e) {
+            alert('Erro ao importar: ' + e.message);
+            this.state.importing = false;
+            this.render();
+            return;
+        }
+
+        this.state.importResult = {
+            type,
+            total: rows.length,
+            imported: imported.length,
+        };
+        this.state.importing = false;
+        this.render();
+    },
+
+    render() {
+        const content = document.getElementById('import-content');
+        if (!content) return;
+
+        content.innerHTML = `
+            <div class="page-header">
+                <h1>${NuckleoIcons.icon('download', 'icon')} Importar</h1>
+                <p class="text-muted">Importe dados de arquivos CSV</p>
+            </div>
+        `;
+
+        if (this.state.importing) {
+            content.innerHTML += '<div class="loading">Importando...</div>';
+            return;
+        }
+
+        // Resultado da importação
+        if (this.state.importResult) {
+            const { type, total, imported } = this.state.importResult;
+            content.innerHTML += `
+                <div class="card" style="padding:1rem;margin-bottom:1.5rem;border-left:3px solid #22c55e;">
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                        ${NuckleoIcons.icon('check-circle', 'icon')}
+                        <strong>Importação concluída!</strong>
+                    </div>
+                    <p>${imported} ${type} importados de ${total} linhas.</p>
+                </div>
+            `;
+        }
+
+        // Opções de importação
+        content.innerHTML += `
+            <div style="display:grid;gap:1rem;max-width:600px;">
+                <div class="card" style="padding:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                        ${NuckleoIcons.icon('file-spreadsheet', 'icon')}
+                        <strong style="font-size:1rem;">Importar Itens (CSV)</strong>
+                    </div>
+                    <p class="text-muted" style="margin-bottom:1rem;">Colunas aceitas: title, content, link</p>
+                    <input type="file" id="import-items" accept=".csv" onchange="NuckleoImport.handleFileSelect('items')" style="margin-bottom:0.5rem;" />
+                    <button class="btn-primary btn-sm" onclick="NuckleoImport.uploadFile('items')">
+                        ${NuckleoIcons.icon('upload', 'icon-xs')} Importar Itens
+                    </button>
+                </div>
+
+                <div class="card" style="padding:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                        ${NuckleoIcons.icon('folder', 'icon')}
+                        <strong style="font-size:1rem;">Importar Espaços (CSV)</strong>
+                    </div>
+                    <p class="text-muted" style="margin-bottom:1rem;">Colunas aceitas: title, description, icon</p>
+                    <input type="file" id="import-spaces" accept=".csv" onchange="NuckleoImport.handleFileSelect('spaces')" style="margin-bottom:0.5rem;" />
+                    <button class="btn-primary btn-sm" onclick="NuckleoImport.uploadFile('spaces')">
+                        ${NuckleoIcons.icon('upload', 'icon-xs')} Importar Espaços
+                    </button>
+                </div>
+
+                <div class="card" style="padding:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                        ${NuckleoIcons.icon('tag', 'icon')}
+                        <strong style="font-size:1rem;">Importar Tags (CSV)</strong>
+                    </div>
+                    <p class="text-muted" style="margin-bottom:1rem;">Colunas aceitas: name, color</p>
+                    <input type="file" id="import-tags" accept=".csv" onchange="NuckleoImport.handleFileSelect('tags')" style="margin-bottom:0.5rem;" />
+                    <button class="btn-primary btn-sm" onclick="NuckleoImport.uploadFile('tags')">
+                        ${NuckleoIcons.icon('upload', 'icon-xs')} Importar Tags
+                    </button>
+                </div>
+            </div>
+        `;
+
+        NuckleoIcons.refreshIcons();
+    },
+
+    selectedFiles: {},
+
+    handleFileSelect(type) {
+        const input = document.getElementById('import-' + type);
+        if (input && input.files[0]) {
+            this.selectedFiles[type] = input.files[0];
+        }
+    },
+
+    uploadFile(type) {
+        const file = this.selectedFiles[type];
+        if (!file) {
+            alert('Selecione um arquivo CSV primeiro.');
+            return;
+        }
+        this.importFromFile(file, type);
+    },
+};
+
+window.NuckleoImport = NuckleoImport;
+
+document.addEventListener('DOMContentLoaded', () => NuckleoImport.init());
+    </script>
 </body>
 </html>

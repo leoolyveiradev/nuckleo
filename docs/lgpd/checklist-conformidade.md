@@ -6,7 +6,7 @@ Documento interno para acompanhamento da adequação. Marque ✅ quando implemen
 
 ## Governança
 
-- [ ] Nomear Encarregado (DPO) — privacidade@horbyonstudios.com
+- [ ] Nomear Encarregado (DPO) — privacidade@nuckleo.com.br
 - [ ] Publicar Política de Privacidade no site (`frontend/pages/legal/`)
 - [ ] Publicar Termos de Uso e Política de Cookies
 - [ ] Registro de operações de tratamento (ROPA) atualizado

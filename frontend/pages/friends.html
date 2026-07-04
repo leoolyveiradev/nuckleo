@@ -11,11 +11,7 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content">
-                <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:0.5rem;">Grupos</h1>
-                <p class="text-muted" style="margin-bottom:1rem;">Página em migração — espelhando <code>src/pages/Friends.jsx</code></p>
-                <div class="card"><p class="text-muted">Conteúdo será portado do React mantendo o design premium.</p></div>
-            </main>
+            <main class="page-content" id="friends-content"></main>
         </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav"></nav>
@@ -28,7 +24,265 @@
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
     <script src="../app.js"></script>
+    <script src="../componentes/cards.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script>
+/**
+ * Friends page — portado de src/pages/Friends.jsx
+ */
+
+const NuckleoFriends = {
+    state: {
+        allRequests: [],
+        allUsers: [],
+        loading: false,
+        searchQuery: '',
+        tab: 'friends',
+    },
+
+    async init() {
+        const user = JSON.parse(localStorage.getItem('nuckleo_user') || '{}');
+        if (!user?.email) {
+            this.renderLoginRequired();
+            return;
+        }
+
+        this.state.user = user;
+        await this.loadData();
+        this.render();
+    },
+
+    async loadData() {
+        this.state.loading = true;
+        this.render();
+
+        try {
+            const [requestsRes, usersRes] = await Promise.all([
+                window.Nuckleo.apiFetch('/friend-requests'),
+                window.Nuckleo.apiFetch('/users'),
+            ]);
+            this.state.allRequests = Array.isArray(requestsRes) ? requestsRes : [];
+            this.state.allUsers = Array.isArray(usersRes) ? usersRes : [];
+        } catch (e) {
+            this.state.allRequests = [];
+            this.state.allUsers = [];
+        }
+
+        this.state.loading = false;
+    },
+
+    getMyFriendEmails() {
+        const email = this.state.user?.email;
+        return this.state.allRequests
+            .filter(r => r.status === 'accepted' && (r.from_user === email || r.to_user === email))
+            .map(r => r.from_user === email ? r.to_user : r.from_user);
+    },
+
+    getFriendUsers() {
+        const friendEmails = this.getMyFriendEmails();
+        return this.state.allUsers.filter(u => friendEmails.includes(u.email));
+    },
+
+    getPendingRequests() {
+        const email = this.state.user?.email;
+        return this.state.allRequests
+            .filter(r => r.to_user === email && r.status === 'pending')
+            .map(r => ({
+                ...this.state.allUsers.find(u => u.email === r.from_user),
+                requestId: r.id,
+            }))
+            .filter(u => u.email);
+    },
+
+    getSearchResults() {
+        if (!this.state.searchQuery.trim()) return [];
+        const email = this.state.user?.email;
+        const friendEmails = this.getMyFriendEmails();
+        const q = this.state.searchQuery.toLowerCase();
+        return this.state.allUsers.filter(u =>
+            u.email !== email &&
+            !friendEmails.includes(u.email) &&
+            (u.full_name?.toLowerCase().includes(q) ||
+                u.username?.toLowerCase().includes(q) ||
+                u.email?.toLowerCase().includes(q))
+        ).slice(0, 10);
+    },
+
+    hasSentRequest(targetEmail) {
+        const email = this.state.user?.email;
+        return this.state.allRequests.some(
+            r => r.from_user === email && r.to_user === targetEmail && r.status === 'pending'
+        );
+    },
+
+    setTab(tab) {
+        this.state.tab = tab;
+        this.render();
+    },
+
+    setSearchQuery(q) {
+        this.state.searchQuery = q;
+        this.render();
+    },
+
+    async sendRequest(targetUser) {
+        await window.Nuckleo.apiFetch('/friend-requests', {
+            method: 'POST',
+            body: JSON.stringify({
+                from_user: this.state.user.email,
+                from_name: this.state.user.full_name,
+                to_user: targetUser.email,
+                to_name: targetUser.full_name,
+                status: 'pending',
+            }),
+        });
+        await this.loadData();
+    },
+
+    async acceptRequest(req) {
+        await window.Nuckleo.apiFetch('/friend-requests/' + req.requestId, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'accepted' }),
+        });
+        await this.loadData();
+    },
+
+    async rejectRequest(req) {
+        await window.Nuckleo.apiFetch('/friend-requests/' + req.requestId, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'rejected' }),
+        });
+        await this.loadData();
+    },
+
+    renderLoginRequired() {
+        const content = document.getElementById('friends-content');
+        content.innerHTML = '<div class="empty-state"><p class="text-muted">Faça login para ver seus amigos.</p></div>';
+    },
+
+    render() {
+        const content = document.getElementById('friends-content');
+        if (!content) return;
+
+        const friends = this.getFriendUsers();
+        const pending = this.getPendingRequests();
+        const search = this.getSearchResults();
+
+        const tabs = [
+            { key: 'friends', label: 'Amigos', count: friends.length },
+            { key: 'pending', label: 'Pendentes', count: pending.length },
+            { key: 'search', label: 'Buscar', count: null },
+        ];
+
+        content.innerHTML = `
+            <div class="page-header">
+                <h1>${NuckleoIcons.icon('users', 'icon')} Firma</h1>
+                <p class="text-muted">Seus amigos e conexões</p>
+            </div>
+
+            <div class="tabs">
+                ${tabs.map(t => `
+                    <button class="tab ${this.state.tab === t.key ? 'active' : ''}" onclick="NuckleoFriends.setTab('${t.key}')">
+                        ${t.label}
+                        ${t.count !== null && t.count > 0 ? '<span class="badge">' + t.count + '</span>' : ''}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+
+        if (this.state.loading) {
+            content.innerHTML += '<div class="loading">Carregando...</div>';
+            return;
+        }
+
+        // Friends tab
+        if (this.state.tab === 'friends') {
+            if (friends.length === 0) {
+                content.innerHTML += `
+                    <div class="empty-state">
+                        ${NuckleoIcons.icon('users', 'icon-lg')}
+                        <p>Nenhum amigo ainda.</p>
+                        <p class="text-dim-sm">Busque pessoas para adicionar!</p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML += `
+                    <div class="users-list">
+                        ${friends.map(u => window.NuckleoCards.renderUserCard(u)).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Pending tab
+        if (this.state.tab === 'pending') {
+            if (pending.length === 0) {
+                content.innerHTML += `
+                    <div class="empty-state">
+                        ${NuckleoIcons.icon('clock', 'icon-lg')}
+                        <p>Nenhuma solicitação pendente.</p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML += `
+                    <div class="users-list">
+                        ${pending.map(u => `
+                            <div class="user-card">
+                                ${window.NuckleoCards.renderUserCard(u)}
+                                <div class="user-actions">
+                                    <button class="btn-primary btn-sm" onclick="NuckleoFriends.acceptRequest(${JSON.stringify(u).replace(/"/g, '&quot;')})">
+                                        ${NuckleoIcons.icon('check', 'icon-xs')}
+                                    </button>
+                                    <button class="btn-ghost btn-sm" onclick="NuckleoFriends.rejectRequest(${JSON.stringify(u).replace(/"/g, '&quot;')})">
+                                        ${NuckleoIcons.icon('x', 'icon-xs')}
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Search tab
+        if (this.state.tab === 'search') {
+            content.innerHTML += `
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar por nome, @username ou email..."
+                           value="${this.state.searchQuery}"
+                           oninput="NuckleoFriends.setSearchQuery(this.value)" />
+                </div>
+            `;
+
+            if (search.length === 0 && this.state.searchQuery) {
+                content.innerHTML += '<div class="empty-state"><p>Nenhum usuário encontrado.</p></div>';
+            } else {
+                content.innerHTML += `
+                    <div class="users-list">
+                        ${search.map(u => `
+                            <div class="user-card">
+                                ${window.NuckleoCards.renderUserCard(u)}
+                                <div class="user-actions">
+                                    ${this.hasSentRequest(u.email)
+                                        ? '<span class="text-dim-sm">Enviado</span>'
+                                        : '<button class="btn-primary btn-sm" onclick="NuckleoFriends.sendRequest(' + JSON.stringify(u).replace(/"/g, '&quot;') + ')">' + NuckleoIcons.icon('user-plus', 'icon-xs') + ' Adicionar</button>'
+                                    }
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+    },
+};
+
+window.NuckleoFriends = NuckleoFriends;
+
+document.addEventListener('DOMContentLoaded', () => NuckleoFriends.init());
+    </script>
 </body>
 </html>

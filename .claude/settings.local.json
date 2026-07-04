@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install pydantic==1.10.15)",
+      "Bash(pip install \"fastapi<0.110\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''app/routers/users.py''\\).read\\(\\)\\)\")"
+    ]
+  }
+}

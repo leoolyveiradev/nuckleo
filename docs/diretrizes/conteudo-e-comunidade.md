@@ -41,7 +41,7 @@ Antes de tornar um espaço ou item público, revise se não há dados sensíveis
 
 ## Denúncias
 
-Usuários podem reportar perfis ou conteúdo via: **abuso@horbyonstudios.com**
+Usuários podem reportar perfis ou conteúdo via: **abuso@nuckleo.com.br**
 
 Analisamos em até **5 dias úteis**. Medidas: remoção, advertência, suspensão ou banimento.
 

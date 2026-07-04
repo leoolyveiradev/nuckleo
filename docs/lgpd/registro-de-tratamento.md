@@ -67,4 +67,4 @@ Documento interno — LGPD art. 37. Atualizar a cada nova finalidade ou subproce
 
 ## Encarregado (DPO)
 
-**E-mail:** privacidade@horbyonstudios.com
+**E-mail:** privacidade@nuckleo.com.br

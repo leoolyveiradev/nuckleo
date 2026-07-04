@@ -2,7 +2,7 @@
 
 **Titular do site:** Horbyon Studios  
 **Produto:** Nuckleo (plataforma web de produtividade e conhecimento pessoal)  
-**Contato:** contato@horbyonstudios.com
+**Contato:** juridico@horbyon.com
 
 ---
 

@@ -112,7 +112,6 @@ function renderTopbar(user = {}) {
         <button class="search-btn" type="button" id="open-search">
             ${NuckleoIcons.icon('search', 'icon-sm')}
             <span class="search-placeholder">Buscar no Nuckleo...</span>
-            <kbd class="search-kbd">⌘ K</kbd>
         </button>
         <div class="topbar-spacer"></div>
         <div class="topbar-actions">
