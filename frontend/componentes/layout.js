@@ -109,11 +109,12 @@ function renderTopbar(user = {}) {
     const profileHref = document.body.dataset.pagePath === 'pages' ? './profile.html' : './pages/profile.html';
 
     el.innerHTML = `
-        <button class="search-btn" type="button" id="open-search">
-            ${NuckleoIcons.icon('search', 'icon-sm')}
-            <span class="search-placeholder">Buscar no Nuckleo...</span>
-        </button>
-        <div class="topbar-spacer"></div>
+        <div class="topbar-search-wrap">
+            <button class="search-btn" type="button" id="open-search">
+                ${NuckleoIcons.icon('search', 'icon-sm')}
+                <span class="search-placeholder">Buscar no Nuckleo...</span>
+            </button>
+        </div>
         <div class="topbar-actions">
             <a href="${resolveHref('./pages/notifications.html')}" class="topbar-icon-btn" aria-label="Notificações">
                 ${NuckleoIcons.icon('bell', 'icon-sm')}
@@ -161,3 +162,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.NuckleoLayout = { renderSidebar, renderTopbar, renderBottomNav, resolveHref };
+

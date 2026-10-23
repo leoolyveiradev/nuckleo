@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Nuckleo — Notificações" />
+    <meta name="theme-color" content="#CBF045" />
+    <title>Nuckleo — Notificações</title>
+    <link rel="stylesheet" href="../style.css" />
+    <script src="https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body data-page="notifications" data-page-path="pages">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <div class="main-wrapper main-wrapper--with-rs">
+            <header class="topbar" id="topbar"></header>
+
+            <main class="page-content">
+                <div class="notif-page">
+
+                    <!-- Header da página -->
+                    <div class="notif-page-header">
+                        <div>
+                            <h1 class="notif-page-title">Notificações</h1>
+                            <p class="notif-page-sub">Acompanhe atividades e atualizações</p>
+                        </div>
+                        <button type="button" class="btn-mark-all" id="btn-mark-all">
+                            Marcar todas como lidas
+                        </button>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="notif-filters" id="notif-filters">
+                        <button class="notif-filter notif-filter--active" data-filter="all">Todas</button>
+                        <button class="notif-filter" data-filter="unread">Não lidas</button>
+                        <button class="notif-filter" data-filter="friend">Amizades</button>
+                        <button class="notif-filter" data-filter="space">Espaços</button>
+                        <button class="notif-filter" data-filter="system">Sistema</button>
+                    </div>
+
+                    <!-- Lista de notificações -->
+                    <div class="notif-list" id="notif-list"></div>
+
+                </div>
+            </main>
+        </div>
+
+        <aside class="right-sidebar" id="right-sidebar"></aside>
+    </div>
+
+    <nav class="bottom-nav" id="bottom-nav"></nav>
+
+    <button type="button" class="ai-fab" id="ai-fab" aria-label="Abrir Kleo">✦</button>
+    <div class="ai-panel" id="ai-panel">
+        <div class="ai-panel-header">
+            <span>Kleo</span>
+            <button type="button" class="ai-panel-close" id="ai-close" aria-label="Fechar">✕</button>
+        </div>
+        <div class="ai-panel-messages" id="ai-messages">
+            <p>Pergunte sobre temas, espaços ou navegação.</p>
+        </div>
+        <form class="ai-panel-input" id="ai-form">
+            <input type="text" id="ai-input" placeholder="Sua dúvida..." autocomplete="off" />
+            <button type="submit" class="btn-primary">→</button>
+        </form>
+    </div>
+
+    <script src="../componentes/icons.js"></script>
+    <script src="../componentes/layout.js"></script>
+    <script src="../componentes/right-sidebar.js"></script>
+    <script src="../componentes/modals.js"></script>
+    <script src="../app.js"></script>
+    <script>
+    (function () {
+        /* ── Dados mock ── */
+        const MOCK_NOTIFS = [
+            {
+                id: 'n1', type: 'friend', read: false,
+                icon: 'user-plus', iconClass: 'notif-icon--friend',
+                title: 'Pedro Alves enviou um pedido de amizade',
+                sub: 'Aceite para conectar e ver os espaços dele',
+                time: 'Agora mesmo',
+                actions: [
+                    { label: 'Aceitar', cls: 'btn-notif-primary', action: 'accept-friend' },
+                    { label: 'Recusar', cls: 'btn-notif-ghost', action: 'decline-friend' },
+                ],
+            },
+            {
+                id: 'n2', type: 'space', read: false,
+                icon: 'layers', iconClass: 'notif-icon--space',
+                title: 'Ana Lima compartilhou o espaço "Design System 2025" com você',
+                sub: '12 itens · Público',
+                time: 'há 10 min',
+                actions: [
+                    { label: 'Ver espaço', cls: 'btn-notif-primary', action: 'view-space' },
+                ],
+            },
+            {
+                id: 'n3', type: 'friend', read: false,
+                icon: 'check-circle', iconClass: 'notif-icon--friend',
+                title: 'João Silva aceitou sua solicitação de amizade',
+                sub: 'Agora vocês estão conectados',
+                time: 'há 1h',
+                actions: [],
+            },
+            {
+                id: 'n4', type: 'space', read: true,
+                icon: 'star', iconClass: 'notif-icon--space',
+                title: 'Seu espaço "Projetos pessoais" foi favoritado por 3 pessoas',
+                sub: 'Maria, Carlos e mais 1',
+                time: 'há 3h',
+                actions: [],
+            },
+            {
+                id: 'n5', type: 'system', read: true,
+                icon: 'zap', iconClass: 'notif-icon--system',
+                title: 'Você está usando 62% do seu armazenamento',
+                sub: '12,4 GB de 20 GB utilizados',
+                time: 'Ontem',
+                actions: [
+                    { label: 'Gerenciar plano', cls: 'btn-notif-ghost', action: 'manage-plan' },
+                ],
+            },
+            {
+                id: 'n6', type: 'system', read: true,
+                icon: 'shield-check', iconClass: 'notif-icon--system',
+                title: 'Bem-vindo ao Nuckleo!',
+                sub: 'Seu segundo cérebro está pronto. Crie seu primeiro espaço.',
+                time: '2 dias atrás',
+                actions: [
+                    { label: 'Criar espaço', cls: 'btn-notif-primary', action: 'create-space' },
+                ],
+            },
+        ];
+
+        let activeFilter = 'all';
+        let notifs = [...MOCK_NOTIFS];
+
+        function getFiltered() {
+            if (activeFilter === 'all') return notifs;
+            if (activeFilter === 'unread') return notifs.filter(n => !n.read);
+            return notifs.filter(n => n.type === activeFilter);
+        }
+
+        function renderList() {
+            const el = document.getElementById('notif-list');
+            if (!el) return;
+
+            const list = getFiltered();
+
+            if (list.length === 0) {
+                el.innerHTML = `
+                    <div class="notif-empty">
+                        <div class="notif-empty-icon">${NuckleoIcons.icon('bell-off', 'icon-md')}</div>
+                        <p>Nenhuma notificação aqui</p>
+                    </div>`;
+                NuckleoIcons.refreshIcons();
+                return;
+            }
+
+            el.innerHTML = list.map((n, i) => `
+                <div class="notif-row ${n.read ? '' : 'notif-row--unread'}"
+                     data-id="${n.id}"
+                     style="animation-delay:${i * 0.04}s">
+                    ${!n.read ? '<span class="notif-unread-dot"></span>' : ''}
+                    <div class="notif-icon-wrap ${n.iconClass}">
+                        ${NuckleoIcons.icon(n.icon, 'icon-sm')}
+                    </div>
+                    <div class="notif-content">
+                        <p class="notif-title">${n.title}</p>
+                        ${n.sub ? `<p class="notif-sub">${n.sub}</p>` : ''}
+                        <p class="notif-time">${n.time}</p>
+                        ${n.actions.length > 0 ? `
+                            <div class="notif-actions">
+                                ${n.actions.map(a => `
+                                    <button type="button" class="${a.cls}" data-action="${a.action}" data-notif="${n.id}">
+                                        ${a.label}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <button type="button" class="notif-dismiss" data-id="${n.id}" aria-label="Dispensar">
+                        ${NuckleoIcons.icon('x', 'icon-xs')}
+                    </button>
+                </div>
+            `).join('');
+
+            NuckleoIcons.refreshIcons();
+            bindEvents();
+            updateUnreadBadge();
+        }
+
+        function bindEvents() {
+            /* Marcar como lida ao clicar na row */
+            document.querySelectorAll('.notif-row').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    if (e.target.closest('.notif-actions') || e.target.closest('.notif-dismiss')) return;
+                    const id = row.dataset.id;
+                    const n = notifs.find(x => x.id === id);
+                    if (n && !n.read) { n.read = true; renderList(); }
+                });
+            });
+
+            /* Dispensar */
+            document.querySelectorAll('.notif-dismiss').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    notifs = notifs.filter(n => n.id !== btn.dataset.id);
+                    renderList();
+                });
+            });
+
+            /* Ações */
+            document.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+                    const id = btn.dataset.notif;
+
+                    if (action === 'create-space' && window.NuckleoModals) {
+                        NuckleoModals.openCreateSpaceModal();
+                    }
+                    if (action === 'accept-friend' || action === 'decline-friend') {
+                        notifs = notifs.filter(n => n.id !== id);
+                        renderList();
+                    }
+                    if (action === 'view-space') {
+                        window.location.href = './spaces.html';
+                    }
+                    if (action === 'manage-plan') {
+                        window.location.href = '../index.html';
+                    }
+                });
+            });
+        }
+
+        function updateUnreadBadge() {
+            const count = notifs.filter(n => !n.read).length;
+            const dot = document.querySelector('.notif-dot');
+            if (dot) dot.style.display = count > 0 ? '' : 'none';
+        }
+
+        /* Filtros */
+        document.getElementById('notif-filters')?.addEventListener('click', (e) => {
+            const btn = e.target.closest('.notif-filter');
+            if (!btn) return;
+            document.querySelectorAll('.notif-filter').forEach(b => b.classList.remove('notif-filter--active'));
+            btn.classList.add('notif-filter--active');
+            activeFilter = btn.dataset.filter;
+            renderList();
+        });
+
+        /* Marcar todas como lidas */
+        document.getElementById('btn-mark-all')?.addEventListener('click', () => {
+            notifs.forEach(n => n.read = true);
+            renderList();
+        });
+
+        document.addEventListener('DOMContentLoaded', renderList);
+    })();
+    </script>
+
+    <style>
+    /* ── Notifications page ── */
+    .notif-page {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 1.5rem 0;
+        animation: fadeIn 0.35s ease;
+    }
+
+    .notif-page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .notif-page-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .notif-page-sub {
+        font-size: 0.8125rem;
+        color: #555;
+        margin-top: 0.2rem;
+    }
+
+    .btn-mark-all {
+        font-size: 0.75rem;
+        color: var(--primary);
+        padding: 0.375rem 0.75rem;
+        border: 1px solid rgba(203,240,69,0.25);
+        border-radius: 0.5rem;
+        transition: all 0.15s;
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+    }
+
+    .btn-mark-all:hover {
+        background: rgba(203,240,69,0.08);
+        border-color: rgba(203,240,69,0.5);
+    }
+
+    /* Filtros */
+    .notif-filters {
+        display: flex;
+        gap: 0.25rem;
+        margin-bottom: 1.25rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .notif-filter {
+        padding: 0.375rem 0.875rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+        color: #666;
+        transition: all 0.15s;
+    }
+
+    .notif-filter:hover { color: #fff; background: #161616; }
+
+    .notif-filter--active {
+        background: rgba(203,240,69,0.1);
+        color: var(--primary);
+    }
+
+    /* Rows */
+    .notif-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .notif-row {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.875rem;
+        padding: 1rem;
+        background: #111;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        animation: slideIn 0.3s ease backwards;
+    }
+
+    .notif-row:hover { border-color: #2a2a2a; background: #141414; }
+
+    .notif-row--unread {
+        background: #131613;
+        border-color: rgba(203,240,69,0.12);
+    }
+
+    .notif-row--unread:hover {
+        border-color: rgba(203,240,69,0.25);
+    }
+
+    .notif-unread-dot {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--primary);
+        flex-shrink: 0;
+    }
+
+    /* Ícone */
+    .notif-icon-wrap {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.625rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .notif-icon--friend { background: rgba(203,240,69,0.12); color: var(--primary); }
+    .notif-icon--space  { background: rgba(96,165,250,0.12); color: #60a5fa; }
+    .notif-icon--system { background: rgba(251,146,60,0.12); color: #fb923c; }
+
+    /* Conteúdo */
+    .notif-content { flex: 1; min-width: 0; padding-right: 1.25rem; }
+
+    .notif-title {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: #ddd;
+        line-height: 1.45;
+    }
+
+    .notif-row--unread .notif-title { color: #fff; }
+
+    .notif-sub {
+        font-size: 0.75rem;
+        color: #555;
+        margin-top: 0.2rem;
+    }
+
+    .notif-time {
+        font-size: 0.6875rem;
+        color: #444;
+        margin-top: 0.375rem;
+    }
+
+    .notif-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .btn-notif-primary {
+        padding: 0.375rem 0.875rem;
+        background: var(--primary);
+        color: #0d0d0d;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: background 0.15s;
+    }
+
+    .btn-notif-primary:hover { background: #b8d93e; }
+
+    .btn-notif-ghost {
+        padding: 0.375rem 0.875rem;
+        background: transparent;
+        color: #888;
+        border: 1px solid #2a2a2a;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.15s;
+    }
+
+    .btn-notif-ghost:hover { color: #fff; border-color: #444; }
+
+    /* Dismiss */
+    .notif-dismiss {
+        position: absolute;
+        top: 0.875rem;
+        right: 0.875rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        color: #444;
+        opacity: 0;
+        transition: all 0.15s;
+    }
+
+    .notif-row:hover .notif-dismiss { opacity: 1; }
+    .notif-dismiss:hover { color: #fff; background: #222; }
+
+    /* Quando tem dot de não lida, o dismiss não conflita */
+    .notif-row--unread .notif-dismiss { top: 1.5rem; }
+
+    /* Empty */
+    .notif-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 4rem 1rem;
+        color: #444;
+        font-size: 0.875rem;
+        text-align: center;
+    }
+
+    .notif-empty-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.75rem;
+        background: #1a1a1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+    }
+    </style>
+</body>
+</html>
+

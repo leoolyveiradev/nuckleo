@@ -3,30 +3,42 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Nuckleo — Meu Perfil" />
+    <meta name="theme-color" content="#CBF045" />
     <title>Nuckleo — Meu Perfil</title>
     <link rel="stylesheet" href="../style.css" />
+    <script src="https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body data-page="profile" data-page-path="pages">
     <div class="app-shell">
         <aside class="sidebar" id="sidebar"></aside>
+
         <div class="main-wrapper">
             <header class="topbar" id="topbar"></header>
-            <main class="page-content" id="profile-content">
-                <!-- Profile content rendered by profile.js -->
-            </main>
+            <main class="page-content" id="profile-content"></main>
         </div>
     </div>
+
     <nav class="bottom-nav" id="bottom-nav"></nav>
-    <button class="ai-fab" id="ai-fab" aria-label="Agente IA">✦</button>
+
+    <button type="button" class="ai-fab" id="ai-fab" aria-label="Abrir Kleo">✦</button>
     <div class="ai-panel" id="ai-panel">
-        <div class="ai-panel-header">Agente Nuckleo <button id="ai-close">✕</button></div>
-        <div class="ai-panel-messages" id="ai-messages"><p>Como posso ajudar?</p></div>
+        <div class="ai-panel-header">
+            <span>Kleo</span>
+            <button type="button" class="ai-panel-close" id="ai-close" aria-label="Fechar">✕</button>
+        </div>
+        <div class="ai-panel-messages" id="ai-messages">
+            <p>Pergunte sobre temas, espaços ou navegação.</p>
+        </div>
         <form class="ai-panel-input" id="ai-form">
-            <input type="text" id="ai-input" placeholder="Sua dúvida..." />
+            <input type="text" id="ai-input" placeholder="Sua dúvida..." autocomplete="off" />
             <button type="submit" class="btn-primary">→</button>
         </form>
     </div>
+
+    <script src="../componentes/icons.js"></script>
     <script src="../componentes/layout.js"></script>
+    <script src="../componentes/modals.js"></script>
     <script src="../componentes/profile.js"></script>
     <script src="../app.js"></script>
 </body>

@@ -259,7 +259,7 @@ const NuckleoSearch = {
         }
 
         if (!this.state.query) {
-            return `<div class="search-empty"><p>Comece a digitar para buscar</p><p class="text-dim-sm">⌘K para abrir a qualquer momento</p></div>`;
+            return `<div class="search-empty"><p>Comece a digitar para buscar</p></div>`;
         }
 
         if (!hasResults) {
@@ -338,7 +338,7 @@ function openSearchModal() {
                 <kbd class="search-kbd">ESC</kbd>
             </div>
             <div class="search-results" id="search-results">
-                <div class="search-empty"><p>Comece a digitar para buscar</p><p class="text-dim-sm">⌘K para abrir a qualquer momento</p></div>
+                <div class="search-empty"><p>Comece a digitar para buscar</p></div>
             </div>
         </div>
     `, 'modal-box--lg');
@@ -366,3 +366,4 @@ window.NuckleoModals = {
     openModal, closeModal, openCreateSpaceModal, openCreateItemModal,
     openItemDetailModal, openNoSpaceModal, openSearchModal,
 };
+
